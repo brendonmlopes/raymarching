@@ -95,7 +95,7 @@ int main(){
                 break;
             }
 
-            r.step(std::sqrt((double)minDistSq)/8.0f);
+            r.step(std::sqrt((double)minDistSq)/200.0f);
         }
     }
 
