@@ -5,6 +5,7 @@
 #include <cmath>
 #include <fstream>
 #include <numbers>
+#include <algorithm>
 #include "Ray.h"
 #include "Point.h"
 #include "Geometry.h"
@@ -50,57 +51,50 @@ int main(){
         }
     }
 
+    Geometry c1(vec3{0,300,700});
+    Geometry c2(vec3{400,400,200});
+    Geometry c3(vec3{200,100,200});
+
+    float radius1 = 200.0f;
+    float radius2 = 70.0f;
+    float radius3 = 100.0f;
+
     for(int i = 0 ; i < heatmap.size() ; i++){
         Ray &r = heatmap.at(i);
-        float radiusSq1 = 16000.0f;
-        float radiusSq2 = 8000.0f;
+
+
         while(true){
-            //Far sphere
-            float dx = r.pos.x - 300.0f;
-            float dy = r.pos.y - 250.0f;
-            float dz = r.pos.z - 160.0f;
-            double distSq1 = dx * dx + dy * dy + dz * dz - radiusSq2;
-            if( distSq1 <= radiusSq1){
-                r.color = 'b';
-                r.hits ++;
-            }
+            float dx1 = r.pos.x - c1.pos.x;
+            float dy1 = r.pos.y - c1.pos.y;
+            float dz1 = r.pos.z - c1.pos.z;
 
-            //green sphere
-            dx = r.pos.x - 200.0f;
-            dy = r.pos.y - 250.0f;
-            dz = r.pos.z - 150.0f;
-            double distSq2 = dx * dx + dy * dy + dz * dz;
-            if( distSq2 <= radiusSq2){
-                r.color = 'g';
-                r.hits ++;
-            }
+            float dx2 = r.pos.x - c2.pos.x;
+            float dy2 = r.pos.y - c2.pos.y;
+            float dz2 = r.pos.z - c2.pos.z;
 
-            //red sphere
-            dx = r.pos.x - 400.0f;
-            dy = r.pos.y - 150.0f;
-            dz = r.pos.z - 170.0f;
-            double distSq3 = dx * dx + dy * dy + dz * dz - radiusSq2;
-            if( distSq3 <= radiusSq2){
-                r.hits ++;
-                r.color = 'r';
-            }
+            float dx3 = r.pos.x - c3.pos.x;
+            float dy3 = r.pos.y - c3.pos.y;
+            float dz3 = r.pos.z - c3.pos.z;
+
+            double d1 = std::sqrt(dx1*dx1 + dy1*dy1 + dz1*dz1) - radius1; 
+            double d2 = std::sqrt(dx2*dx2 + dy2*dy2 + dz2*dz2) - radius2; 
+            double d3 = std::sqrt(dx3*dx3 + dy3*dy3 + dz3*dz3) - radius3;
+
+            double d = std::min({d1,d2,d3});
 
             if(r.hits){
                 break;
             }
 
-            double minDistSq = (double)std::min(std::min(distSq1,distSq2),distSq3);
-
-            if(minDistSq>=100000000.f){
-                break;
-            }
-
-            if(minDistSq<=10.0f){
+            if(d<=0.001f){
                 r.hits++;
                 break;
             }
 
-            r.step(std::sqrt((double)minDistSq)/20.0f);
+            r.step(std::sqrt((double)d)*0.8f);
+            if(r.travel > 1000.0f){
+                break;
+            }
         }
     }
 
@@ -124,9 +118,9 @@ int main(){
         Ray &r = heatmap.at(i);
 
         if(r.hits){
-            rgb[0] = 0.0f;
-            rgb[1] = 0.0f;
-            rgb[2] = 0.0f;
+            rgb[0] = 55.0f;
+            rgb[1] = 55.0f;
+            rgb[2] = 55.0f;
 
             float v;
             v = ((float)r.travel/(float)maxTravel);
@@ -147,6 +141,10 @@ int main(){
             }else if(r.color =='g'){
                 rgb[1] = (unsigned char) v;
             }else if(r.color =='b'){
+                rgb[2] = (unsigned char) v;
+            }else{
+                rgb[0] = (unsigned char) v;
+                rgb[1] = (unsigned char) v;
                 rgb[2] = (unsigned char) v;
             }
         }else{
