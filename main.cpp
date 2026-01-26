@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <iostream>
 #include <array>
 #include <vector>
 #include <cmath>
@@ -7,16 +8,13 @@
 #include "Ray.h"
 #include "Point.h"
 #include "Geometry.h"
+#include "Vector.h"
 
-void normalize(std::array<float,3> &v){
-    double len = std::sqrt(v.at(0)*v.at(0) + v.at(1)*v.at(1) + v.at(2)*v.at(2) );
-    v.at(0) = v.at(0)/len;
-    v.at(1) = v.at(1)/len;
-    v.at(2) = v.at(2)/len;
-}
-
-float dot(std::array<float,3> v, std::array<float,3> w){
-    return (v.at(0) * w.at(0) + v.at(1) * w.at(1) + v.at(2) * w.at(2) );
+void normalize(vec3 &v){
+    double len = std::sqrt(v.x*v.x + v.y*v.y + v.z*v.z );
+    v.x = v.x/len;
+    v.y = v.y/len;
+    v.z = v.z/len;
 }
 
 int main(){
@@ -30,40 +28,47 @@ int main(){
         for(int j = 0 ; j < height ; j++){
             Ray r;
 
-            float u = (float) i / (float) width;
-            float v = (float) j / (float) height;
+            float aspectRatio = (float) width / (float) height;
 
-            r.pos = std::array<float,3>{(float)i,(float)j,0};
-            r.dir = std::array<float,3>{0.2f,0.0f,1.0f};
-            //r.pos = std::array<float,3>{0,0,0};
-            //r.dir = std::array<float,3>{(float)std::cos(u*(float)std::numbers::pi),(float)std::sin(v*(float)std::numbers::pi),1};
+            float fov = 60.0f; //This is in degrees
+            float scale = std::tan((fov*0.5f)*(std::numbers::pi_v<float>/180.0f));
 
+            //float u = (2.0f * (float) i / (float) width);
+            //float v = (2.0f * (float) j / (float) height);
+
+            float u = (((i+0.5f)/(float) width ) * 2.0f - 1.0f) * aspectRatio * scale;
+            float v = (1.0f - ((j + 0.5f)/(float) height) * 2.0f) * scale * -1;
+
+            //r.pos = vec3 ((float)i,(float)j,0);
+            //r.dir = vec3 (0.0f,0.0f,1.0f);
+
+            r.pos = vec3 (256.0f,256.0f,-300.0f);
+            r.dir = vec3 (u,v,1.0f);
             normalize(r.dir);
+
             heatmap.at(j*width+i) = r;
         }
     }
 
-
-    //This is to calculate the distances to the spheres and to the ground (just a clamp on x)
     for(int i = 0 ; i < heatmap.size() ; i++){
         Ray &r = heatmap.at(i);
         float radiusSq1 = 16000.0f;
         float radiusSq2 = 8000.0f;
         while(true){
             //Far sphere
-            float dx = r.pos.at(0) - 300.0f;
-            float dy = r.pos.at(1) - 250.0f;
-            float dz = r.pos.at(2) - 160.0f;
-            double distSq1 = dx * dx + dy * dy + dz * dz;
+            float dx = r.pos.x - 300.0f;
+            float dy = r.pos.y - 250.0f;
+            float dz = r.pos.z - 160.0f;
+            double distSq1 = dx * dx + dy * dy + dz * dz - radiusSq2;
             if( distSq1 <= radiusSq1){
                 r.color = 'b';
                 r.hits ++;
             }
 
             //green sphere
-            dx = r.pos.at(0) - 200.0f;
-            dy = r.pos.at(1) - 250.0f;
-            dz = r.pos.at(2) - 150.0f;
+            dx = r.pos.x - 200.0f;
+            dy = r.pos.y - 250.0f;
+            dz = r.pos.z - 150.0f;
             double distSq2 = dx * dx + dy * dy + dz * dz;
             if( distSq2 <= radiusSq2){
                 r.color = 'g';
@@ -71,10 +76,10 @@ int main(){
             }
 
             //red sphere
-            dx = r.pos.at(0) - 400.0f;
-            dy = r.pos.at(1) - 150.0f;
-            dz = r.pos.at(2) - 170.0f;
-            double distSq3 = dx * dx + dy * dy + dz * dz;
+            dx = r.pos.x - 400.0f;
+            dy = r.pos.y - 150.0f;
+            dz = r.pos.z - 170.0f;
+            double distSq3 = dx * dx + dy * dy + dz * dz - radiusSq2;
             if( distSq3 <= radiusSq2){
                 r.hits ++;
                 r.color = 'r';
@@ -86,7 +91,7 @@ int main(){
 
             double minDistSq = (double)std::min(std::min(distSq1,distSq2),distSq3);
 
-            if(minDistSq>=100000.f){
+            if(minDistSq>=100000000.f){
                 break;
             }
 
@@ -95,7 +100,7 @@ int main(){
                 break;
             }
 
-            r.step(std::sqrt((double)minDistSq)/200.0f);
+            r.step(std::sqrt((double)minDistSq)/20.0f);
         }
     }
 

@@ -1,49 +1,32 @@
-#include <array>
+#pragma once
 #include <cstdio>
 #include <cstdint>
 #include <cmath>
+#include "Vector.h"
 
 struct Ray{
-    std::array<float,3> pos;
-    std::array<float,3> dir;
+    vec3 pos{0.0f,0.0f,0.0f};
+    vec3 dir{0.0f,0.0f,1.0f};
     uint8_t hits = 0;
-    uint8_t steps = 0;
+    uint16_t steps = 0;
     float travel = 0.0f;
     char color;
 
-    Ray(){
-        pos.at(0)=0.f;
-        pos.at(1)=0.f;
-        pos.at(2)=0.f;
-    };
-
     void step(float stepSize = 0.01f){
-        pos.at(0) += dir.at(0)*stepSize;
-        pos.at(1) += dir.at(1)*stepSize;
-        pos.at(2) += dir.at(2)*stepSize;
+        pos.x += dir.x*stepSize;
+        pos.y += dir.y*stepSize;
+        pos.z += dir.z*stepSize;
         steps+=1;
         travel+=stepSize;
     };
 
     void print(){
         printf("Position:\t");
-        printf("(%.2f\t,%.2f\t,%.2f)\n",pos.at(0),pos.at(1),pos.at(2));
+        printf("(%.2f\t,%.2f\t,%.2f)\n",pos.x,pos.y,pos.z);
         printf("Direction:\t");
-        printf("(%.2f\t,%.2f\t,%.2f)\n",dir.at(0),dir.at(1),dir.at(2));
+        printf("(%.2f\t,%.2f\t,%.2f)\n",dir.x,dir.y,dir.z);
         printf("Hits:\t");
-        printf("%ld\n",hits);
+        printf("%u\n",hits);
     };
-
-    float norm(){
-        float x = pos.at(0);
-        float y = pos.at(1);
-        float z = pos.at(2);
-
-        if(x*x+y*y+z*z == 0){return 0.0f;}
-
-        float out = std::pow(x*x + y*y + z*z,1/2);
-
-        return out;
-    }
 
 };
