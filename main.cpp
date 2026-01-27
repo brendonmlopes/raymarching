@@ -31,19 +31,16 @@ int main(){
 
             float aspectRatio = (float) width / (float) height;
 
-            float fov = 60.0f; //This is in degrees
+            float fov = 70.0f; //This is in degrees
             float scale = std::tan((fov*0.5f)*(std::numbers::pi_v<float>/180.0f));
 
             //float u = (2.0f * (float) i / (float) width);
             //float v = (2.0f * (float) j / (float) height);
 
-            float u = (((i+0.5f)/(float) width ) * 2.0f - 1.0f) * aspectRatio * scale;
-            float v = (1.0f - ((j + 0.5f)/(float) height) * 2.0f) * scale * -1;
+            float u = ( ( (i)/(float) width ) * 2.0f - 1.0f) * aspectRatio * scale;
+            float v = ( ( 1.0f - (j) / (float) height ) * 2.0f - 1.0f) * scale ;
 
-            //r.pos = vec3 ((float)i,(float)j,0);
-            //r.dir = vec3 (0.0f,0.0f,1.0f);
-
-            r.pos = vec3 (256.0f,256.0f,-300.0f);
+            r.pos = vec3 (0.0f,0.0f,0.0f);
             r.dir = vec3 (u,v,1.0f);
             normalize(r.dir);
 
@@ -51,22 +48,21 @@ int main(){
         }
     }
 
-    Geometry c1(vec3{0,300,700});
-    Geometry c2(vec3{400,400,200});
-    Geometry c3(vec3{200,100,200});
+    Geometry c1(vec3{0,0,300});
+    Geometry c2(vec3{400,300,700});
+    Geometry c3(vec3{200,100,700});
 
-    float radius1 = 200.0f;
+    float radius1 = 50.0f;
     float radius2 = 70.0f;
-    float radius3 = 100.0f;
+    float radius3 = 90.0f;
 
     for(int i = 0 ; i < heatmap.size() ; i++){
         Ray &r = heatmap.at(i);
 
-
         while(true){
-            float dx1 = r.pos.x - c1.pos.x;
-            float dy1 = r.pos.y - c1.pos.y;
-            float dz1 = r.pos.z - c1.pos.z;
+            float dx1 = std::fmod(r.pos.x+50.0f,100.0f) - c1.pos.x;
+            float dy1 = std::fmod(r.pos.y,200.0f) - c1.pos.y;
+            float dz1 = std::fmod(r.pos.z,400.0f) - c1.pos.z;
 
             float dx2 = r.pos.x - c2.pos.x;
             float dy2 = r.pos.y - c2.pos.y;
@@ -76,8 +72,8 @@ int main(){
             float dy3 = r.pos.y - c3.pos.y;
             float dz3 = r.pos.z - c3.pos.z;
 
-            double d1 = std::sqrt(dx1*dx1 + dy1*dy1 + dz1*dz1) - radius1; 
-            double d2 = std::sqrt(dx2*dx2 + dy2*dy2 + dz2*dz2) - radius2; 
+	    double d1 = std::sqrt(dx1*dx1 + dy1*dy1 + dz1*dz1) - radius1;
+            double d2 = std::sqrt(dx2*dx2 + dy2*dy2 + dz2*dz2) - radius2;
             double d3 = std::sqrt(dx3*dx3 + dy3*dy3 + dz3*dz3) - radius3;
 
             double d = std::min({d1,d2,d3});
@@ -86,13 +82,16 @@ int main(){
                 break;
             }
 
-            if(d<=0.001f){
+            if(d<=0.01f){
                 r.hits++;
                 break;
             }
 
             r.step(std::sqrt((double)d)*0.8f);
-            if(r.travel > 1000.0f){
+            if(r.steps > 200 ){
+		if(d<10.0f){
+		   r.hits++;
+		}
                 break;
             }
         }
@@ -105,47 +104,73 @@ int main(){
         }
     }
 
+    float maxSteps = 0;
+    for(int i = 0 ; i < heatmap.size() ; i++){
+        if(heatmap.at(i).steps > maxSteps){
+            maxSteps = heatmap.at(i).steps;
+        }
+    }
+
     std::ofstream out("image.ppm",std::ios::binary);
     if(!out){
         return false;
     };
     out << "P6\n" << (int)width << " " << (int)height << "\n255\n";
 
-
-    float k = 1.0f;
+    float k = 0.1f;
     for(int i = 0 ; i < heatmap.size() ; i++){
         unsigned char rgb[3];
-        Ray &r = heatmap.at(i);
+        Ray &ray = heatmap.at(i);
 
-        if(r.hits){
+        if(ray.hits){
             rgb[0] = 55.0f;
             rgb[1] = 55.0f;
             rgb[2] = 55.0f;
 
-            float v;
-            v = ((float)r.travel/(float)maxTravel);
-            if(v<0.0f)v=0.0f;
-            if(v>1.0f)v=1.0f;
+            float r;
+	    float g;
+	    float b;
 
-            v = 1 - v;
+            r = ((float)ray.travel/(float)maxTravel);
+	    g = ((float)ray.travel+200.0f);
+	    b = ((float)ray.steps/(float)maxSteps);
 
-            v = 1.0f - expf(-k*v);
+            if(r<0.0f)r=0.0f;
+            if(r>1.0f)r=1.0f;
 
-            if(v<0.0f)v=0.0f;
-            if(v>1.0f)v=1.0f;
+            if(g<0.0f)r=0.0f;
+            if(g>1.0f)r=1.0f;
 
-            v = v * 255.0f + 0.5f;
+            if(b<0.0f)r=0.0f;
+            if(b>1.0f)r=1.0f;
 
-            if(r.color == 'r'){
-                rgb[0] = (unsigned char) v;
-            }else if(r.color =='g'){
-                rgb[1] = (unsigned char) v;
-            }else if(r.color =='b'){
-                rgb[2] = (unsigned char) v;
+            r = k/(r*r);
+            g = k/(g*g);
+            b = k/(b*b);
+
+            if(r<0.0f)r=0.0f;
+            if(r>1.0f)r=1.0f;
+
+            if(g<0.0f)g=0.0f;
+            if(g>1.0f)g=1.0f;
+
+            if(b<0.0f)b=0.0f;
+            if(b>1.0f)b=1.0f;
+
+            r = r * 255.0f + 0.5f;
+            g = g * 255.0f + 0.5f;
+            b = b * 255.0f + 0.5f;
+
+            if(ray.color == 'r'){
+                rgb[0] = (unsigned char) r;
+            }else if(ray.color =='g'){
+                rgb[1] = (unsigned char) g;
+            }else if(ray.color =='b'){
+                rgb[2] = (unsigned char) b;
             }else{
-                rgb[0] = (unsigned char) v;
-                rgb[1] = (unsigned char) v;
-                rgb[2] = (unsigned char) v;
+                rgb[0] = (unsigned char) r;
+                rgb[1] = (unsigned char) g;
+                rgb[2] = (unsigned char) b;
             }
         }else{
             rgb[0] = 0;
@@ -154,6 +179,9 @@ int main(){
         }
         out.write((char*) rgb,3);
     }
+    printf("Closing file...\n");
+    out.close();
+    printf("File Closed.");
     return 0;
 }
 
