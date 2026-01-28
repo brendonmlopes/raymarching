@@ -37,7 +37,7 @@ int main(){
             //float u = (2.0f * (float) i / (float) width);
             //float v = (2.0f * (float) j / (float) height);
 
-            float u = ( ( (i+0.0f)/(float) width ) * 2.0f - 1.0f) * aspectRatio * scale;
+            float u = ( ( (i+1.0f)/(float) width ) * 2.0f - 1.0f) * aspectRatio * scale;
             float v = ( ( 1.0f - (j) / (float) height ) * 2.0f - 1.0f) * scale ;
 
             r.pos = vec3 (0.0f,0.0f,0.0f);
@@ -85,6 +85,7 @@ int main(){
             if(d<=0.01f){
                 r.hits++;
                 r.color = vec3( 1.0f - r.steps/200.0f , 1.0f - r.steps/200.0f , 1.0f - r.steps/100.0f );
+                r.minDist = d;
                 break;
             }
 
@@ -93,6 +94,7 @@ int main(){
                 if(d<10.0f){
                     r.color = vec3(0.0f,0.0f,0.0f);
                     r.hits++;
+                    r.minDist = d;
                 }
                 break;
             }
@@ -119,7 +121,7 @@ int main(){
     };
     out << "P6\n" << (int)width << " " << (int)height << "\n255\n";
 
-    float k = 0.1f;
+    float k = 0.15f;
     for(int i = 0 ; i < heatmap.size() ; i++){
         unsigned char rgb[3];
         Ray &ray = heatmap.at(i);
@@ -168,7 +170,7 @@ int main(){
             rgb[2] = (unsigned char) b;
 
         }else{
-            rgb[0] = 0;
+            rgb[0] = ray.minDist;
             rgb[1] = 0;
             rgb[2] = 0;
         }

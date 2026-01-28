@@ -10,6 +10,7 @@ struct Ray{
     uint8_t hits = 0;
     uint16_t steps = 0;
     float travel = 0.0f;
+    float minDist = 1e30f;
     vec3 color {0.0f,0.0f,0.0f};
 
     void step(float stepSize = 0.01f){
