@@ -45,6 +45,13 @@ struct vec3{
         return res;
     }
 
+    float const operator[](int i)const {
+        if(i==0) return x;
+        if(i==1) return y;
+        if(i==2) return z;
+        return 0.0f;
+    }
+
     float dot(const vec3 &w)const {
         float res = x*w.x+y*w.y+z*w.z;
         return res;

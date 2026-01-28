@@ -37,7 +37,7 @@ int main(){
             //float u = (2.0f * (float) i / (float) width);
             //float v = (2.0f * (float) j / (float) height);
 
-            float u = ( ( (i)/(float) width ) * 2.0f - 1.0f) * aspectRatio * scale;
+            float u = ( ( (i+0.0f)/(float) width ) * 2.0f - 1.0f) * aspectRatio * scale;
             float v = ( ( 1.0f - (j) / (float) height ) * 2.0f - 1.0f) * scale ;
 
             r.pos = vec3 (0.0f,0.0f,0.0f);
@@ -48,21 +48,21 @@ int main(){
         }
     }
 
-    Geometry c1(vec3{0,0,300});
-    Geometry c2(vec3{400,300,700});
-    Geometry c3(vec3{200,100,700});
+    Geometry c1(vec3{0,0,30});
+    Geometry c2(vec3{40,30,70});
+    Geometry c3(vec3{20,10,70});
 
-    float radius1 = 50.0f;
-    float radius2 = 70.0f;
-    float radius3 = 90.0f;
+    float radius1 = 2.5f;
+    float radius2 = 1.0f;
+    float radius3 = 1.0f;
 
     for(int i = 0 ; i < heatmap.size() ; i++){
         Ray &r = heatmap.at(i);
 
         while(true){
-            float dx1 = std::fmod(r.pos.x+50.0f,100.0f) - c1.pos.x;
-            float dy1 = std::fmod(r.pos.y,200.0f) - c1.pos.y;
-            float dz1 = std::fmod(r.pos.z,400.0f) - c1.pos.z;
+            float dx1 = std::fmod(r.pos.x - c1.pos.x + 267.5f,10.0f) - 2.5f;
+            float dy1 = std::fmod(r.pos.y - c1.pos.y + 267.5f,10.0f) - 2.5f;
+            float dz1 = std::fmod(r.pos.z - c1.pos.z + 2.5f,5.0f) - 2.5f;
 
             float dx2 = r.pos.x - c2.pos.x;
             float dy2 = r.pos.y - c2.pos.y;
@@ -72,7 +72,7 @@ int main(){
             float dy3 = r.pos.y - c3.pos.y;
             float dz3 = r.pos.z - c3.pos.z;
 
-	    double d1 = std::sqrt(dx1*dx1 + dy1*dy1 + dz1*dz1) - radius1;
+            double d1 = std::sqrt(dx1*dx1 + dy1*dy1 + dz1*dz1) - radius1;
             double d2 = std::sqrt(dx2*dx2 + dy2*dy2 + dz2*dz2) - radius2;
             double d3 = std::sqrt(dx3*dx3 + dy3*dy3 + dz3*dz3) - radius3;
 
@@ -84,14 +84,16 @@ int main(){
 
             if(d<=0.01f){
                 r.hits++;
+                r.color = vec3( 1.0f - r.steps/200.0f , 1.0f - r.steps/200.0f , 1.0f - r.steps/100.0f );
                 break;
             }
 
             r.step(std::sqrt((double)d)*0.8f);
-            if(r.steps > 200 ){
-		if(d<10.0f){
-		   r.hits++;
-		}
+            if(r.steps > 1000 ){
+                if(d<10.0f){
+                    r.color = vec3(0.0f,0.0f,0.0f);
+                    r.hits++;
+                }
                 break;
             }
         }
@@ -123,17 +125,17 @@ int main(){
         Ray &ray = heatmap.at(i);
 
         if(ray.hits){
-            rgb[0] = 55.0f;
-            rgb[1] = 55.0f;
-            rgb[2] = 55.0f;
+            rgb[0] = 0.0f;
+            rgb[1] = 0.0f;
+            rgb[2] = 0.0f;
 
             float r;
-	    float g;
-	    float b;
+            float g;
+            float b;
 
-            r = ((float)ray.travel/(float)maxTravel);
-	    g = ((float)ray.travel+200.0f);
-	    b = ((float)ray.steps/(float)maxSteps);
+            r = ray.color[0];
+            g = ray.color[1];
+            b = ray.color[2];
 
             if(r<0.0f)r=0.0f;
             if(r>1.0f)r=1.0f;
@@ -161,17 +163,10 @@ int main(){
             g = g * 255.0f + 0.5f;
             b = b * 255.0f + 0.5f;
 
-            if(ray.color == 'r'){
-                rgb[0] = (unsigned char) r;
-            }else if(ray.color =='g'){
-                rgb[1] = (unsigned char) g;
-            }else if(ray.color =='b'){
-                rgb[2] = (unsigned char) b;
-            }else{
-                rgb[0] = (unsigned char) r;
-                rgb[1] = (unsigned char) g;
-                rgb[2] = (unsigned char) b;
-            }
+            rgb[0] = (unsigned char) r;
+            rgb[1] = (unsigned char) g;
+            rgb[2] = (unsigned char) b;
+
         }else{
             rgb[0] = 0;
             rgb[1] = 0;
