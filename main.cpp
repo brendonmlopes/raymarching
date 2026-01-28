@@ -11,6 +11,74 @@
 #include "Geometry.h"
 #include "Vector.h"
 
+void writeToFile(uint16_t width, uint16_t height, std::array<Ray,262144> &heatmap, float maxTravel, float maxSteps){
+    printf("Opening file...\n");
+    std::ofstream out("image.ppm",std::ios::binary);
+    if(!out){
+        return;
+    };
+    out << "P6\n" << (int)width << " " << (int)height << "\n255\n";
+
+    float k = 0.25f;
+    for(int i = 0 ; i < heatmap.size() ; i++){
+        unsigned char rgb[3];
+        Ray &ray = heatmap.at(i);
+
+        if(ray.hits){
+            rgb[0] = 0.0f;
+            rgb[1] = 0.0f;
+            rgb[2] = 0.0f;
+
+            float r;
+            float g;
+            float b;
+
+            r = ray.color[0];
+            g = ray.color[1];
+            b = ray.color[2];
+
+            if(r<0.0f)r=0.0f;
+            if(r>1.0f)r=1.0f;
+
+            if(g<0.0f)r=0.0f;
+            if(g>1.0f)r=1.0f;
+
+            if(b<0.0f)r=0.0f;
+            if(b>1.0f)r=1.0f;
+
+            r = k/(r*r);
+            g = k/(g*g);
+            b = k/(b*b);
+
+            if(r<0.0f)r=0.0f;
+            if(r>1.0f)r=1.0f;
+
+            if(g<0.0f)g=0.0f;
+            if(g>1.0f)g=1.0f;
+
+            if(b<0.0f)b=0.0f;
+            if(b>1.0f)b=1.0f;
+
+            r = r * 255.0f + 0.5f;
+            g = g * 255.0f + 0.5f;
+            b = b * 255.0f + 0.5f;
+
+            rgb[0] = (unsigned char) r;
+            rgb[1] = (unsigned char) g;
+            rgb[2] = (unsigned char) b;
+
+        }else{
+            rgb[0] = ray.minDist;
+            rgb[1] = 0;
+            rgb[2] = 0;
+        }
+        out.write((char*) rgb,3);
+    }
+    printf("Closing file...\n");
+    out.close();
+    printf("File Closed.");
+} 
+
 void normalize(vec3 &v){
     double len = std::sqrt(v.x*v.x + v.y*v.y + v.z*v.z );
     v.x = v.x/len;
@@ -115,70 +183,7 @@ int main(){
         }
     }
 
-    std::ofstream out("image.ppm",std::ios::binary);
-    if(!out){
-        return false;
-    };
-    out << "P6\n" << (int)width << " " << (int)height << "\n255\n";
-
-    float k = 0.15f;
-    for(int i = 0 ; i < heatmap.size() ; i++){
-        unsigned char rgb[3];
-        Ray &ray = heatmap.at(i);
-
-        if(ray.hits){
-            rgb[0] = 0.0f;
-            rgb[1] = 0.0f;
-            rgb[2] = 0.0f;
-
-            float r;
-            float g;
-            float b;
-
-            r = ray.color[0];
-            g = ray.color[1];
-            b = ray.color[2];
-
-            if(r<0.0f)r=0.0f;
-            if(r>1.0f)r=1.0f;
-
-            if(g<0.0f)r=0.0f;
-            if(g>1.0f)r=1.0f;
-
-            if(b<0.0f)r=0.0f;
-            if(b>1.0f)r=1.0f;
-
-            r = k/(r*r);
-            g = k/(g*g);
-            b = k/(b*b);
-
-            if(r<0.0f)r=0.0f;
-            if(r>1.0f)r=1.0f;
-
-            if(g<0.0f)g=0.0f;
-            if(g>1.0f)g=1.0f;
-
-            if(b<0.0f)b=0.0f;
-            if(b>1.0f)b=1.0f;
-
-            r = r * 255.0f + 0.5f;
-            g = g * 255.0f + 0.5f;
-            b = b * 255.0f + 0.5f;
-
-            rgb[0] = (unsigned char) r;
-            rgb[1] = (unsigned char) g;
-            rgb[2] = (unsigned char) b;
-
-        }else{
-            rgb[0] = ray.minDist;
-            rgb[1] = 0;
-            rgb[2] = 0;
-        }
-        out.write((char*) rgb,3);
-    }
-    printf("Closing file...\n");
-    out.close();
-    printf("File Closed.");
+    writeToFile(width,height,heatmap,maxTravel,maxSteps);
     return 0;
 }
 

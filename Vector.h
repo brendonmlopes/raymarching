@@ -62,4 +62,10 @@ struct vec3{
         return res;
     }
 
+    vec3 normalize()const {
+        float len = std::sqrt(x*x + y*y + z*z);
+        vec3 res(x/len , y/len , z/len);
+        return res;
+    }
+
 };
